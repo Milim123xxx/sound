@@ -52,4 +52,5 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ github.sha }}
 
       - name: Output image info
-        run: echo "Image pushed: ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest"
+        # ใช้ runner env vars แทน ${{ ... }} เพื่อหลีกเลี่ยงปัญหา parser
+        run: echo "Image pushed: ghcr.io/${GITHUB_REPOSITORY_OWNER}/${GITHUB_REPOSITORY}:latest"
