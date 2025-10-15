@@ -1,0 +1,35 @@
+name: Jekyll site CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby and Jekyll
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          gem install bundler jekyll
+          bundle install
+
+      - name: Build Jekyll site
+        run: jekyll build --future
+
+      - name: Upload site as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: _site
