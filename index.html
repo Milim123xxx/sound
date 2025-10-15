@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Card UI</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f0f0f,#1a1a1a);font-family:'Segoe UI',sans-serif;padding:40px 20px;overflow-x:hidden}
+    .floating{animation:float 6s ease-in-out infinite;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6));margin:20px}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-25px)}}
+    .card{width:380px;border-radius:30px;background:linear-gradient(145deg,rgba(30,30,30,.9),rgba(20,20,20,.9));border:1px solid rgba(255,255,255,.1);color:#fff;padding:30px;text-align:center;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.8);transition:all .3s}
+    .card.vertical{width:300px}
+    .watermark{position:absolute;top:15px;left:20px;font-size:14px;font-weight:600;color:rgba(255,255,255,.3);z-index:5;pointer-events:none}
+    .album-container{position:relative;margin-bottom:80px}
+    .square{width:100%;height:280px;border-radius:20px;overflow:hidden;box-shadow:0 15px 35px rgba(0,0,0,.5);position:relative;z-index:2;transition:transform .3s}
+    .square:hover{transform:scale(1.02)}
+    .square img{width:100%;height:100%;object-fit:cover}
+    .card.vertical .square{height:240px}
+    .title{margin:15px 0 10px;font-size:22px;font-weight:700;cursor:pointer;transition:color .3s}
+    .title:hover{color:#00ff88}
+    .subtitle{font-size:14px;opacity:.6;margin-bottom:20px}
+    .audio-player{background:rgba(255,255,255,.05);border-radius:15px;padding:20px;border:1px solid rgba(255,255,255,.1)}
+    .audio-controls{display:flex;align-items:center;gap:15px;margin-bottom:15px}
+    .play-pause-btn{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc6a);border:none;color:#000;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;box-shadow:0 5px 15px rgba(0,255,136,.4);font-weight:bold}
+    .play-pause-btn:hover{transform:scale(1.1)}
+    .time-info{flex:1;text-align:left;font-size:14px;font-weight:500}
+    .progress-container{width:100%;height:6px;background:rgba(255,255,255,.1);border-radius:10px;cursor:pointer;position:relative;overflow:hidden}
+    .progress-bar{height:100%;background:linear-gradient(90deg,#00ff88,#00cc6a);border-radius:10px;width:0;transition:width .1s;position:relative}
+    .progress-bar::after{content:'';position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:14px;height:14px;background:#fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+    .circle{width:140px;height:140px;border-radius:50%;overflow:hidden;border:6px solid rgba(255,255,255,.8);position:absolute;bottom:-70px;left:50%;transform:translateX(-50%);background:#000;box-shadow:0 10px 30px rgba(0,0,0,.8);z-index:1}
+    .circle.spinning{animation:spin 8s linear infinite}
+    .circle img{width:100%;height:100%;object-fit:cover}
+    @keyframes spin{100%{transform:translateX(-50%) rotate(360deg)}}
+    .card.vertical .circle{width:110px;height:110px;bottom:-55px}
+    .menu-btn{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:24px;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .3s;z-index:10}
+    .menu-btn:hover{background:rgba(255,255,255,.2);transform:rotate(90deg)}
+    .menu-popup{display:none;position:absolute;top:70px;right:20px;background:rgba(20,20,20,.98);border-radius:15px;padding:15px;box-shadow:0 10px 40px rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.1);min-width:240px;z-index:100}
+    .menu-popup button{display:block;width:100%;margin:8px 0;padding:12px 16px;background:linear-gradient(135deg,rgba(0,255,136,.2),rgba(0,204,106,.2));border:1px solid rgba(0,255,136,.3);color:#fff;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s;text-align:left}
+    .menu-popup button:hover{background:linear-gradient(135deg,rgba(0,255,136,.3),rgba(0,204,106,.3));transform:translateX(5px)}
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;justify-content:center;align-items:center}
+    .modal-content{background:linear-gradient(145deg,rgba(20,20,20,.98),rgba(30,30,30,.98));padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.1);max-width:400px;width:90%}
+    .modal-content h2{color:#fff;margin-bottom:20px;font-size:24px}
+    .modal-content input{width:100%;padding:15px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#fff;font-size:16px;margin-bottom:20px;outline:none}
+    .modal-content input:focus{border-color:#00ff88;box-shadow:0 0 0 3px rgba(0,255,136,.2)}
+    .modal-buttons{display:flex;gap:10px}
+    .modal-buttons button{flex:1;padding:12px;border-radius:10px;border:none;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s}
+    .modal-buttons .confirm{background:linear-gradient(135deg,#00ff88,#00cc6a);color:#000}
+    .modal-buttons .confirm:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(0,255,136,.5)}
+    .modal-buttons .cancel{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.2)}
+    .modal-buttons .cancel:hover{background:rgba(255,255,255,.1)}
+    .orientation-options{display:flex;gap:10px;margin-bottom:20px}
+    .orientation-btn{flex:1;padding:15px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .3s;text-align:center}
+    .orientation-btn.active{background:linear-gradient(135deg,#00ff88,#00cc6a);border-color:#00ff88;color:#000}
+    .orientation-btn:hover{border-color:#00ff88}
+    .progress-modal{background:linear-gradient(145deg,rgba(20,20,20,.98),rgba(30,30,30,.98));padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.1);max-width:400px;width:90%;text-align:center}
+    .progress-modal h2{color:#fff;margin-bottom:30px;font-size:24px}
+    .progress-modal .info{color:rgba(255,255,255,.9);font-size:16px;line-height:2;margin-bottom:20px}
+    .progress-modal .warn{color:#ffaa00;font-size:14px;opacity:.8;margin-top:20px}
+    .hide-on-record{transition:opacity .3s}
+    .recording .hide-on-record{opacity:0;pointer-events:none}
+  </style>
+</head>
+<body>
+  <div class="floating" id="capture">
+    <div class="card" id="card">
+      <div class="watermark">@0.000.90s</div>
+      <button class="menu-btn hide-on-record" onclick="toggleMenu()">⋮</button>
+      <div class="menu-popup hide-on-record" id="menu">
+        <button onclick="upload('music')">🎵 เพิ่มเพลง</button>
+        <button onclick="upload('video')">🎬 เพิ่มเสียงจาก MP4</button>
+        <button onclick="openModal('title')">✏️ เปลี่ยนชื่อ</button>
+        <button onclick="upload('main')">🖼️ เปลี่ยนรูป</button>
+        <button onclick="upload('circle')">💿 เปลี่ยนวงกลม</button>
+        <button onclick="upload('bg')">🌌 เปลี่ยนพื้นหลัง</button>
+        <button onclick="openModal('download')">⬇️ ดาวน์โหลด</button>
+      </div>
+      <div class="album-container">
+        <div class="circle" id="circle">
+          <img id="circleImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%23222'/%3E%3Ccircle cx='100' cy='100' r='30' fill='%23000'/%3E%3C/svg%3E">
+        </div>
+        <div class="square">
+          <img id="mainImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23333' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='white' text-anchor='middle' dy='.3em'%3EMusic Cover%3C/text%3E%3C/svg%3E">
+        </div>
+      </div>
+      <div class="title" id="title" onclick="openModal('title')">Speed up - China pipa</div>
+      <div class="subtitle">คลิกเพื่อเปลี่ยนชื่อ</div>
+      <div class="audio-player">
+        <div class="audio-controls">
+          <button class="play-pause-btn" id="playBtn" onclick="togglePlay()">▶</button>
+          <div class="time-info"><span id="current">0:00</span> / <span id="duration">0:00</span></div>
+        </div>
+        <div class="progress-container" id="progCont">
+          <div class="progress-bar" id="progBar"></div>
+        </div>
+      </div>
+      <audio id="audio" style="display:none"></audio>
+    </div>
+  </div>
+
+  <div class="modal" id="titleModal">
+    <div class="modal-content">
+      <h2>✏️ เปลี่ยนชื่อเพลง</h2>
+      <input type="text" id="titleInput" placeholder="ใส่ชื่อเพลงใหม่...">
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal('title')">ยกเลิก</button>
+        <button class="confirm" onclick="saveTitle()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="downloadModal">
+    <div class="modal-content">
+      <h2>⬇️ เลือกรูปแบบวิดีโอ</h2>
+      <div class="orientation-options">
+        <button class="orientation-btn active" id="horBtn" onclick="setOrientation('h')">📱<br>แนวนอน<br>(16:9)</button>
+        <button class="orientation-btn" id="verBtn" onclick="setOrientation('v')">📱<br>แนวตั้ง<br>(9:16)</button>
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal('download')">ยกเลิก</button>
+        <button class="confirm" onclick="startRecord()">เริ่มดาวน์โหลด</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="progressModal">
+    <div class="progress-modal">
+      <h2>⚠️ ข้อจำกัดของเบราว์เซอร์</h2>
+      <div class="info">
+        เนื่องจากข้อจำกัดของเบราว์เซอร์<br>
+        การบันทึกวิดีโอ MP4 จริงๆ<br>
+        ต้องใช้ซอฟต์แวร์บันทึกหน้าจอแทน<br><br>
+        <strong>แนะนำ:</strong><br>
+        • OBS Studio (ฟรี)<br>
+        • ShareX (Windows)<br>
+        • QuickTime (Mac)<br>
+        • หรือใช้ Screen Recorder ในเบราว์เซอร์
+      </div>
+      <div class="warn">
+        กด OK เพื่อเล่นเพลงและบันทึกด้วยตัวเอง
+      </div>
+      <div class="modal-buttons">
+        <button class="confirm" onclick="startPlayForRecord()" style="width:100%">OK - เล่นเพลง</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fMain" style="display:none" accept="image/*">
+  <input type="file" id="fCircle" style="display:none" accept="image/*">
+  <input type="file" id="fBG" style="display:none" accept="image/*">
+  <input type="file" id="fMusic" style="display:none" accept="audio/*">
+  <input type="file" id="fVideo" style="display:none" accept="video/*">
+
+  <script>
+    const audio=document.getElementById('audio'),playBtn=document.getElementById('playBtn'),circle=document.getElementById('circle'),progBar=document.getElementById('progBar'),progCont=document.getElementById('progCont'),card=document.getElementById('card'),capture=document.getElementById('capture');
+    let orientation='h',audioDuration=0,isVideoSource=false,videoEl=null;
+
+    function toggleMenu(){const m=document.getElementById('menu');m.style.display=m.style.display==='block'?'none':'block'}
+    document.addEventListener('click',e=>{const m=document.getElementById('menu'),b=document.querySelector('.menu-btn');if(!m.contains(e.target)&&e.target!==b)m.style.display='none'});
+
+    function togglePlay(){
+      if(audio.paused){
+        const playPromise=audio.play();
+        if(playPromise!==undefined){
+          playPromise.then(()=>{
+            console.log('Audio playing');
+            if(videoEl)videoEl.play().catch(e=>console.error(e));
+          }).catch(e=>{
+            console.error('Play error:',e);
+            alert('ไม่สามารถเล่นเสียงได้ กรุณาลองใหม่อีกครั้ง');
+          });
+        }
+      }else{
+        audio.pause();
+        if(videoEl)videoEl.pause();
+      }
+    }
+
+    audio.addEventListener('play',()=>{playBtn.innerHTML='❚❚';circle.classList.add('spinning')});
+    audio.addEventListener('pause',()=>{playBtn.innerHTML='▶';circle.classList.remove('spinning')});
+    audio.addEventListener('ended',()=>{playBtn.innerHTML='▶';circle.classList.remove('spinning');if(videoEl)videoEl.pause()});
+
+    function fmt(s){if(!s||isNaN(s)||s===Infinity)return'0:00';const m=Math.floor(s/60),sec=Math.floor(s%60);return`${m}:${sec<10?'0':''}${sec}`}
+    
+    audio.addEventListener('timeupdate',()=>{
+      if(audio.duration&&audio.duration!==Infinity){
+        const p=(audio.currentTime/audio.duration)*100;
+        progBar.style.width=p+'%';
+        document.getElementById('current').textContent=fmt(audio.currentTime);
+      }
+    });
+    
+    audio.addEventListener('loadedmetadata',()=>{
+      if(audio.duration&&audio.duration!==Infinity){
+        audioDuration=audio.duration;
+        document.getElementById('duration').textContent=fmt(audio.duration);
+      }
+    });
+    
+    audio.addEventListener('durationchange',()=>{
+      if(audio.duration&&audio.duration!==Infinity){
+        audioDuration=audio.duration;
+        document.getElementById('duration').textContent=fmt(audio.duration);
+      }
+    });
+    
+    progCont.addEventListener('click',e=>{
+      if(audio.duration&&audio.duration!==Infinity){
+        const r=progCont.getBoundingClientRect();
+        const x=e.clientX-r.left;
+        const t=(x/r.width)*audio.duration;
+        audio.currentTime=t;
+        if(videoEl)videoEl.currentTime=t;
+      }
+    });
+
+    function upload(type){
+      if(type==='music')document.getElementById('fMusic').click();
+      else if(type==='video')document.getElementById('fVideo').click();
+      else if(type==='main')document.getElementById('fMain').click();
+      else if(type==='circle')document.getElementById('fCircle').click();
+      else if(type==='bg')document.getElementById('fBG').click();
+    }
+
+    document.getElementById('fMusic').addEventListener('change',e=>{
+      const f=e.target.files[0];
+      if(f){
+        isVideoSource=false;
+        if(videoEl){videoEl.pause();videoEl.remove();videoEl=null}
+        audio.srcObject=null;
+        audio.src=URL.createObjectURL(f);
+        audio.load();
+        audio.addEventListener('canplay',()=>{
+          console.log('Audio ready to play');
+        },{once:true});
+      }
+    });
+
+    document.getElementById('fVideo').addEventListener('change',e=>{
+      const f=e.target.files[0];
+      if(f){
+        isVideoSource=true;
+        if(videoEl){videoEl.pause();videoEl.remove()}
+        
+        videoEl=document.createElement('video');
+        videoEl.src=URL.createObjectURL(f);
+        videoEl.style.display='none';
+        videoEl.muted=true;
+        document.body.appendChild(videoEl);
+        
+        videoEl.addEventListener('loadedmetadata',()=>{
+          if(videoEl.duration&&videoEl.duration!==Infinity){
+            audioDuration=videoEl.duration;
+            document.getElementById('duration').textContent=fmt(videoEl.duration);
+          }
+          
+          try{
+            const ctx=new(window.AudioContext||window.webkitAudioContext)();
+            ctx.resume().then(()=>{
+              const src=ctx.createMediaElementSource(videoEl);
+              const dest=ctx.createMediaStreamDestination();
+              src.connect(dest);
+              
+              audio.srcObject=dest.stream;
+              audio.load();
+              console.log('Video audio ready');
+            });
+          }catch(err){
+            console.error('AudioContext error:',err);
+          }
+        },{once:true});
+        
+        videoEl.addEventListener('timeupdate',()=>{
+          if(videoEl.duration&&videoEl.duration!==Infinity){
+            const p=(videoEl.currentTime/videoEl.duration)*100;
+            progBar.style.width=p+'%';
+            document.getElementById('current').textContent=fmt(videoEl.currentTime);
+          }
+        });
+        
+        videoEl.load();
+      }
+    });
+
+    document.getElementById('fMain').addEventListener('change',e=>{const u=URL.createObjectURL(e.target.files[0]);document.getElementById('mainImg').src=u;document.getElementById('circleImg').src=u});
+    document.getElementById('fCircle').addEventListener('change',e=>document.getElementById('circleImg').src=URL.createObjectURL(e.target.files[0]));
+    document.getElementById('fBG').addEventListener('change',e=>{const u=URL.createObjectURL(e.target.files[0]);document.body.style.backgroundImage=`url(${u})`;document.body.style.backgroundSize='cover'});
+
+    function openModal(type){
+      if(type==='title'){
+        document.getElementById('titleModal').style.display='flex';
+        document.getElementById('titleInput').value=document.getElementById('title').textContent;
+        setTimeout(()=>document.getElementById('titleInput').focus(),100);
+      }else if(type==='download'){
+        document.getElementById('downloadModal').style.display='flex';
+      }
+    }
+
+    function closeModal(type){
+      document.getElementById(type==='title'?'titleModal':'downloadModal').style.display='none';
+    }
+
+    function saveTitle(){
+      const t=document.getElementById('titleInput').value.trim();
+      if(t)document.getElementById('title').textContent=t;
+      closeModal('title');
+    }
+
+    document.getElementById('titleInput').addEventListener('keypress',e=>{if(e.key==='Enter')saveTitle()});
+
+    function setOrientation(o){
+      orientation=o;
+      document.getElementById('horBtn').classList.toggle('active',o==='h');
+      document.getElementById('verBtn').classList.toggle('active',o==='v');
+    }
+
+    function startRecord(){
+      if(!audio.src&&!audio.srcObject){
+        alert('กรุณาเพิ่มเพลงก่อน!');
+        return;
+      }
+      
+      closeModal('download');
+      
+      if(orientation==='v'){
+        capture.classList.add('vertical');
+        card.classList.add('vertical');
+      }else{
+        capture.classList.remove('vertical');
+        card.classList.remove('vertical');
+      }
+      
+      capture.classList.add('recording');
+      document.getElementById('progressModal').style.display='flex';
+    }
+
+    function startPlayForRecord(){
+      document.getElementById('progressModal').style.display='none';
+      
+      audio.currentTime=0;
+      if(videoEl)videoEl.currentTime=0;
+      
+      if(isVideoSource&&videoEl){
+        videoEl.play().then(()=>console.log('Video playing')).catch(e=>console.error(e));
+      }else{
+        audio.play().then(()=>console.log('Audio playing')).catch(e=>console.error(e));
+      }
+      
+      if(audioDuration>0){
+        setTimeout(()=>{
+          capture.classList.remove('recording','vertical');
+          card.classList.remove('vertical');
+        },audioDuration*1000+500);
+      }
+    }
+  </script>
+</body>
+        </html>
